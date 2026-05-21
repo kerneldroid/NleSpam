@@ -36,12 +36,10 @@ fun DashboardScreen(
     onNavigateToChromecastSpam: () -> Unit,
     onNavigateToAirTagClone: () -> Unit,
     onNavigateToMixSpam: () -> Unit,
-
-    // Multi-tools
-    onNavigateToDiscoverySuite: () -> Unit,
-    onNavigateToAnalysisSuite: () -> Unit,
-
+    
     onNavigateToPacketLogger: () -> Unit,
+    onNavigateToUuidDatabase: () -> Unit,
+    onNavigateToAdDecoder: () -> Unit,
     onNavigateToBtFileSender: () -> Unit,
     onNavigateToSettings: () -> Unit,
 ) {
@@ -59,7 +57,7 @@ fun DashboardScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-        title = {
+                title = {
                     Column {
                         Text(
                             "NleSpam",
@@ -90,7 +88,6 @@ fun DashboardScreen(
                 .padding(start = 16.dp, end = 16.dp, top = 4.dp, bottom = 120.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            // Live stats card (Extracted to prevent full-screen recomposition)
             if (isRunning) {
                 LiveStatsCard(
                     packetsFlow = viewModel.engine.packetsSent,
@@ -100,7 +97,6 @@ fun DashboardScreen(
                 Spacer(Modifier.height(4.dp))
             }
 
-            // Category cards
             Text(
                 text = "Attack Vectors",
                 style = MaterialTheme.typography.titleLarge,
@@ -110,7 +106,7 @@ fun DashboardScreen(
 
             SpamCategoryCard(
                 title = "Mix All Spam",
-                subtitle = "Everything combined — chaotic multi-protocol flood",
+                subtitle = "Multi-protocol flood",
                 icon = Icons.Default.Shuffle,
                 deviceCount = 0,
                 isActive = isRunning && activeType == SpamType.MIXED_ALL,
@@ -118,35 +114,8 @@ fun DashboardScreen(
             )
 
             SpamCategoryCard(
-                title = "iBeacon Flood",
-                subtitle = "Spam fake iBeacon location beacons",
-                icon = Icons.Default.LocationOn,
-                deviceCount = 0,
-                isActive = isRunning && activeType == SpamType.IBEACON_FLOOD,
-                onClick = onNavigateToIBeaconFlood,
-            )
-
-            SpamCategoryCard(
-                title = "Chromecast Spam",
-                subtitle = "Spoof Chromecast & Google Home discovery",
-                icon = Icons.Default.Cast,
-                deviceCount = 0,
-                isActive = isRunning && activeType == SpamType.CHROMECAST_SPAM,
-                onClick = onNavigateToChromecastSpam,
-            )
-
-            SpamCategoryCard(
-                title = "AirTag Clone",
-                subtitle = "Broadcast fake Find My network signals",
-                icon = Icons.Default.Sell,
-                deviceCount = 0,
-                isActive = isRunning && activeType == SpamType.AIRTAG_CLONE,
-                onClick = onNavigateToAirTagClone,
-            )
-
-            SpamCategoryCard(
                 title = "Mix Spam",
-                subtitle = "Fast Pair + Swift Pair + Samsung combined",
+                subtitle = "Fast Pair + Swift Pair + Samsung",
                 icon = Icons.Default.Merge,
                 deviceCount = 0,
                 isActive = isRunning && activeType == SpamType.MIX_SPAM,
@@ -155,7 +124,7 @@ fun DashboardScreen(
 
             SpamCategoryCard(
                 title = "Google Fast Pair",
-                subtitle = "Android devices — headphones, speakers, phones",
+                subtitle = "Android devices",
                 icon = Icons.Default.Bluetooth,
                 deviceCount = fastPairSets.size,
                 isActive = isRunning && activeType == SpamType.FAST_PAIR,
@@ -164,41 +133,67 @@ fun DashboardScreen(
 
             SpamCategoryCard(
                 title = "Apple Continuity",
-                subtitle = "iOS popups — AirPods, Beats, Vision Pro",
+                subtitle = "iOS popups & modals",
                 icon = Icons.Default.PhoneIphone,
                 deviceCount = appleDeviceSets.size + appleActionSets.size,
-                isActive = activeType == com.nlespam.models.SpamType.APPLE_DEVICE_POPUP || activeType == com.nlespam.models.SpamType.APPLE_ACTION_MODAL,
+                isActive = activeType == SpamType.APPLE_DEVICE_POPUP || activeType == SpamType.APPLE_ACTION_MODAL,
                 onClick = onNavigateToApple,
             )
 
             SpamCategoryCard(
                 title = "Samsung Easy Setup",
-                subtitle = "Galaxy Buds & Watch popups",
+                subtitle = "Buds & Watch popups",
                 icon = Icons.Default.Watch,
                 deviceCount = samsungBudsSets.size + samsungWatchSets.size,
-                isActive = activeType == com.nlespam.models.SpamType.SAMSUNG_BUDS || activeType == com.nlespam.models.SpamType.SAMSUNG_WATCH,
+                isActive = activeType == SpamType.SAMSUNG_BUDS || activeType == SpamType.SAMSUNG_WATCH,
                 onClick = onNavigateToSamsung,
             )
 
             SpamCategoryCard(
                 title = "Windows Swift Pair",
-                subtitle = "Windows 10/11 Bluetooth popups",
+                subtitle = "Windows 10/11 popups",
                 icon = Icons.Default.DesktopWindows,
                 deviceCount = swiftPairSets.size,
-                isActive = activeType == com.nlespam.models.SpamType.SWIFT_PAIR,
+                isActive = activeType == SpamType.SWIFT_PAIR,
                 onClick = onNavigateToSwiftPair,
             )
 
             SpamCategoryCard(
+                title = "iBeacon Flood",
+                subtitle = "Fake location beacons",
+                icon = Icons.Default.LocationOn,
+                deviceCount = 0,
+                isActive = isRunning && activeType == SpamType.IBEACON_FLOOD,
+                onClick = onNavigateToIBeaconFlood,
+            )
+
+            SpamCategoryCard(
+                title = "Chromecast Spam",
+                subtitle = "Spoofed discovery",
+                icon = Icons.Default.Cast,
+                deviceCount = 0,
+                isActive = isRunning && activeType == SpamType.CHROMECAST_SPAM,
+                onClick = onNavigateToChromecastSpam,
+            )
+
+            SpamCategoryCard(
+                title = "AirTag Clone",
+                subtitle = "Fake Find My signals",
+                icon = Icons.Default.Sell,
+                deviceCount = 0,
+                isActive = isRunning && activeType == SpamType.AIRTAG_CLONE,
+                onClick = onNavigateToAirTagClone,
+            )
+
+            SpamCategoryCard(
                 title = "Lovespouse",
-                subtitle = "IoT toy control — play & stop modes",
+                subtitle = "IoT toy control",
                 icon = Icons.Default.Favorite,
                 deviceCount = lovespouseSets.size,
-                isActive = activeType == com.nlespam.models.SpamType.LOVESPOUSE_PLAY,
+                isActive = activeType == SpamType.LOVESPOUSE_PLAY,
                 onClick = onNavigateToLovespouse,
             )
 
-            // Tools section
             Spacer(Modifier.height(4.dp))
             Text(
                 text = "Tools",
@@ -208,26 +203,8 @@ fun DashboardScreen(
             )
 
             SpamCategoryCard(
-                title = "Discovery Suite",
-                subtitle = "BLE Scanner, Signal Monitor, RSSI Distance",
-                icon = Icons.AutoMirrored.Filled.BluetoothSearching,
-                deviceCount = 0,
-                isActive = false,
-                onClick = onNavigateToDiscoverySuite,
-            )
-
-            SpamCategoryCard(
-                title = "Analysis Suite",
-                subtitle = "Payload Inspector, Ad Decoder, UUID DB",
-                icon = Icons.Default.Code,
-                deviceCount = 0,
-                isActive = false,
-                onClick = onNavigateToAnalysisSuite,
-            )
-
-            SpamCategoryCard(
                 title = "Packet Logger",
-                subtitle = "Real-time log of outgoing spam packets",
+                subtitle = "Live traffic monitor",
                 icon = Icons.Default.Terminal,
                 deviceCount = 0,
                 isActive = false,
@@ -235,8 +212,26 @@ fun DashboardScreen(
             )
 
             SpamCategoryCard(
+                title = "UUID Database",
+                subtitle = "Searchable BLE UUIDs",
+                icon = Icons.Default.Search,
+                deviceCount = 0,
+                isActive = false,
+                onClick = onNavigateToUuidDatabase,
+            )
+
+            SpamCategoryCard(
+                title = "Advertisement Decoder",
+                subtitle = "Raw ad parser",
+                icon = Icons.Default.DataObject,
+                deviceCount = 0,
+                isActive = false,
+                onClick = onNavigateToAdDecoder,
+            )
+
+            SpamCategoryCard(
                 title = "Bluetooth File Sender",
-                subtitle = "Send any file via BT OPP to nearby devices",
+                subtitle = "Send files via BT OPP",
                 icon = Icons.AutoMirrored.Filled.SendAndArchive,
                 deviceCount = 0,
                 isActive = false,

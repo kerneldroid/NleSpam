@@ -8,8 +8,8 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
-import android.view.WindowManager
 import androidx.activity.viewModels
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
@@ -23,7 +23,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import android.annotation.SuppressLint
@@ -31,8 +30,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
-import androidx.navigation.NavHostController
-import androidx.navigation.compose.*
 import com.nlespam.ui.NleSpamViewModel
 import com.nlespam.ui.navigation.Routes
 import com.nlespam.ui.screens.*
@@ -61,10 +58,9 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         
-        // Unlock High Refresh Rate (120Hz/144Hz)
+        // Unlock High Refresh Rate
         val window = window
         window.attributes = window.attributes.apply {
-            // Try to find the display mode with the highest refresh rate
             val display = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
                 display
             } else {
@@ -94,7 +90,6 @@ class MainActivity : ComponentActivity() {
     override fun onNewIntent(intent: android.content.Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
-        // Trigger recomposition with new route if app was already foreground
         val route = intent.getStringExtra(com.nlespam.service.SpamForegroundService.EXTRA_ROUTE)
         if (route != null) {
             viewModel.navigateTo(route)
@@ -129,7 +124,11 @@ fun NleSpamMainHost(viewModel: NleSpamViewModel, initialRoute: String? = null) {
     }
     val currentRoute = navStack.lastOrNull() ?: Routes.DASHBOARD
 
-    // Handle navigateTo() calls from ViewModel (e.g. onNewIntent while in foreground)
+    // Proper back handling to prevent app closing when in sub-screens
+    BackHandler(enabled = navStack.size > 1) {
+        navStack = navStack.dropLast(1)
+    }
+
     LaunchedEffect(pendingNavRoute) {
         val route = pendingNavRoute
         if (route != null) {
@@ -146,7 +145,6 @@ fun NleSpamMainHost(viewModel: NleSpamViewModel, initialRoute: String? = null) {
         }
     }
 
-    // Only show bottom bar on top-level routes
     val showBottomBar = bottomNavItems.any { it.route == currentRoute }
 
     Box(
@@ -172,14 +170,12 @@ fun NleSpamMainHost(viewModel: NleSpamViewModel, initialRoute: String? = null) {
                     onNavigateToChromecastSpam = { navStack = navStack + Routes.CHROMECAST_SPAM },
                     onNavigateToAirTagClone = { navStack = navStack + Routes.AIRTAG_CLONE },
                     onNavigateToMixSpam = { navStack = navStack + Routes.MIX_SPAM },
-
-                    // Multi-tools
-                    onNavigateToDiscoverySuite = { navStack = navStack + Routes.TOOL_SUITE_DISCOVERY },
-                    onNavigateToAnalysisSuite = { navStack = navStack + Routes.TOOL_SUITE_ANALYSIS },
                     
                     onNavigateToPacketLogger = { navStack = navStack + Routes.PACKET_LOGGER },
+                    onNavigateToUuidDatabase = { navStack = navStack + Routes.UUID_DATABASE },
+                    onNavigateToAdDecoder = { navStack = navStack + Routes.AD_DECODER },
                     onNavigateToBtFileSender = { navStack = navStack + Routes.BT_FILE_SENDER },
-                    onNavigateToSettings = { navStack = listOf(Routes.SETTINGS) }, // Swap base
+                    onNavigateToSettings = { navStack = listOf(Routes.SETTINGS) },
                 )
                 Routes.FAST_PAIR -> FastPairScreen(viewModel = viewModel, onBack = popBackStack)
                 Routes.APPLE -> AppleScreen(viewModel = viewModel, onBack = popBackStack)
@@ -187,8 +183,6 @@ fun NleSpamMainHost(viewModel: NleSpamViewModel, initialRoute: String? = null) {
                 Routes.SWIFT_PAIR -> SwiftPairScreen(viewModel = viewModel, onBack = popBackStack)
                 Routes.LOVESPOUSE -> LovespouseScreen(viewModel = viewModel, onBack = popBackStack)
                 Routes.MIX_ALL -> MixAllScreen(viewModel = viewModel, onBack = popBackStack)
-                Routes.TOOL_SUITE_DISCOVERY -> DiscoverySuiteScreen(viewModel = viewModel, onBack = popBackStack)
-                Routes.TOOL_SUITE_ANALYSIS -> AnalysisSuiteScreen(viewModel = viewModel, onBack = popBackStack)
                 Routes.IBEACON_FLOOD -> IBeaconFloodScreen(viewModel = viewModel, onBack = popBackStack)
                 Routes.CHROMECAST_SPAM -> ChromecastSpamScreen(viewModel = viewModel, onBack = popBackStack)
                 Routes.AIRTAG_CLONE -> AirTagCloneScreen(viewModel = viewModel, onBack = popBackStack)
@@ -208,7 +202,7 @@ fun NleSpamMainHost(viewModel: NleSpamViewModel, initialRoute: String? = null) {
                 currentRoute = currentRoute,
                 onNavigate = { route ->
                     if (route != currentRoute) {
-                        navStack = listOf(route) // Reset stack to new top-level tab
+                        navStack = listOf(route) 
                     }
                 },
                 modifier = Modifier
@@ -225,21 +219,20 @@ fun ExpressiveBottomBar(
     onNavigate: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    // Floating pill nav — no gray background, uses shadow only, larger footprint
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 24.dp), // Less side margin so the pill can be wider
+            .padding(horizontal = 24.dp),
         horizontalArrangement = Arrangement.Center,
     ) {
         Surface(
             shape = RoundedCornerShape(36.dp),
-            color = MaterialTheme.colorScheme.surfaceContainer, // More solid, distinct from base background
-            tonalElevation = 0.dp, // Disable tonal elevation to prevent dark mode gray tinting
-            shadowElevation = 24.dp, // Very strong shadow for floating effect
+            color = MaterialTheme.colorScheme.surfaceContainer,
+            tonalElevation = 0.dp,
+            shadowElevation = 24.dp,
         ) {
             Row(
-                modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp), // Bigger inner padding
+                modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp),
                 horizontalArrangement = Arrangement.spacedBy(4.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
@@ -309,7 +302,7 @@ fun ExpressiveNavItem(
                 imageVector = destination.icon,
                 contentDescription = destination.label,
                 tint = contentColor,
-                modifier = Modifier.size(26.dp), // Larger icon
+                modifier = Modifier.size(26.dp),
             )
             AnimatedVisibility(
                 visible = isSelected,
@@ -318,11 +311,11 @@ fun ExpressiveNavItem(
             ) {
                 Text(
                     text = destination.label,
-                    modifier = Modifier.padding(start = 10.dp), // More space between icon and text
+                    modifier = Modifier.padding(start = 10.dp),
                     style = MaterialTheme.typography.labelLarge,
                     fontWeight = FontWeight.Bold,
                     color = contentColor,
-                    fontSize = 15.sp, // Larger font
+                    fontSize = 15.sp,
                 )
             }
         }

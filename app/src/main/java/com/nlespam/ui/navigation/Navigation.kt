@@ -15,22 +15,16 @@ object Routes {
     const val SWIFT_PAIR = "swift_pair"
     const val LOVESPOUSE = "lovespouse"
     const val MIX_ALL = "mix_all"
-    const val BLE_SCANNER = "ble_scanner"
-    const val PAYLOAD_INSPECTOR = "payload_inspector"
     const val IBEACON_FLOOD = "ibeacon_flood"
     const val CHROMECAST_SPAM = "chromecast_spam"
     const val AIRTAG_CLONE = "airtag_clone"
 
-    const val RSSI_DISTANCE = "rssi_distance"
     const val PACKET_LOGGER = "packet_logger"
     const val MIX_SPAM = "mix_spam"
     const val UUID_DATABASE = "uuid_database"
-    const val SIGNAL_MONITOR = "signal_monitor"
     const val AD_DECODER = "ad_decoder"
     const val BT_FILE_SENDER = "bt_file_sender"
     const val SETTINGS = "settings"
-    const val TOOL_SUITE_DISCOVERY = "tool_suite_discovery"
-    const val TOOL_SUITE_ANALYSIS = "tool_suite_analysis"
 }
 
 @Composable
@@ -52,13 +46,11 @@ fun NleSpamNavHost(
                 onNavigateToChromecastSpam = { navController.navigate(Routes.CHROMECAST_SPAM) },
                 onNavigateToAirTagClone = { navController.navigate(Routes.AIRTAG_CLONE) },
                 onNavigateToMixSpam = { navController.navigate(Routes.MIX_SPAM) },
-
-                // Multi-tools
-                onNavigateToDiscoverySuite = { navController.navigate(Routes.TOOL_SUITE_DISCOVERY) },
-                onNavigateToAnalysisSuite = { navController.navigate(Routes.TOOL_SUITE_ANALYSIS) },
                 
-                onNavigateToBtFileSender = { navController.navigate(Routes.BT_FILE_SENDER) },
                 onNavigateToPacketLogger = { navController.navigate(Routes.PACKET_LOGGER) },
+                onNavigateToUuidDatabase = { navController.navigate(Routes.UUID_DATABASE) },
+                onNavigateToAdDecoder = { navController.navigate(Routes.AD_DECODER) },
+                onNavigateToBtFileSender = { navController.navigate(Routes.BT_FILE_SENDER) },
                 onNavigateToSettings = { navController.navigate(Routes.SETTINGS) },
             )
         }
@@ -80,12 +72,6 @@ fun NleSpamNavHost(
         composable(Routes.MIX_ALL) {
             MixAllScreen(viewModel = viewModel, onBack = { navController.popBackStack() })
         }
-        composable(Routes.TOOL_SUITE_DISCOVERY) {
-            DiscoverySuiteScreen(viewModel = viewModel, onBack = { navController.popBackStack() })
-        }
-        composable(Routes.TOOL_SUITE_ANALYSIS) {
-            AnalysisSuiteScreen(viewModel = viewModel, onBack = { navController.popBackStack() })
-        }
         composable(Routes.IBEACON_FLOOD) {
             IBeaconFloodScreen(viewModel = viewModel, onBack = { navController.popBackStack() })
         }
@@ -100,6 +86,12 @@ fun NleSpamNavHost(
         }
         composable(Routes.MIX_SPAM) {
             MixSpamScreen(viewModel = viewModel, onBack = { navController.popBackStack() })
+        }
+        composable(Routes.UUID_DATABASE) {
+            UuidDatabaseScreen(viewModel = viewModel, onBack = { navController.popBackStack() })
+        }
+        composable(Routes.AD_DECODER) {
+            AdvertisementDecoderScreen(viewModel = viewModel, onBack = { navController.popBackStack() })
         }
         composable(Routes.BT_FILE_SENDER) {
             BluetoothFileSenderScreen(viewModel = viewModel, onBack = { navController.popBackStack() })
