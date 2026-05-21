@@ -1,0 +1,55 @@
+# Built application files
+*.apk
+*.aab
+*.ap_
+*.aar
+
+# Files for the ART/Dalvik VM
+*.dex
+
+# Java class files
+*.class
+
+# Generated files
+bin/
+gen/
+out/
+release/
+
+# Gradle files
+.gradle/
+build/
+!gradle/wrapper/gradle-wrapper.jar
+
+# Local configuration file (sdk path, etc)
+local.properties
+
+# Android Studio / IntelliJ
+.idea/
+*.iml
+*.iws
+*.ipr
+
+# Kotlin
+.kotlin/
+
+# Proguard
+proguard/
+
+# Log files
+*.log
+
+# Key/Signing files
+*.jks
+*.keystore
+keyrelease
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Skill / AI agent files (not part of the app)
+Material3Expressive_Skill/
+
+# Build logs
+build_log.txt
