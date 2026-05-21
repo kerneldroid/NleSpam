@@ -35,6 +35,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.nlespam.ui.NleSpamViewModel
 import kotlinx.coroutines.*
+import kotlinx.coroutines.sync.Semaphore
+import kotlinx.coroutines.sync.withPermit
 import java.io.InputStream
 import java.util.UUID
 
@@ -259,32 +261,48 @@ fun BluetoothFileSenderScreen(
 
                     scope.launch(Dispatchers.IO) {
                         val devices = discoveredDevices.toList()
-                        for (device in devices) {
-                            // Update status to SENDING
-                            withContext(Dispatchers.Main) {
-                                discoveredDevices = discoveredDevices.map {
-                                    if (it.address == device.address) it.copy(sendStatus = SendStatus.SENDING) else it
-                                }
-                            }
+                        // Use a semaphore to limit concurrent transfers to 3
+                        // to avoid overwhelming the BT controller.
+                        val semaphore = kotlinx.coroutines.sync.Semaphore(3)
+                        
+                        devices.map { device ->
+                            async {
+                                semaphore.withPermit {
+                                    withContext(Dispatchers.Main) {
+                                        discoveredDevices = discoveredDevices.map {
+                                            if (it.address == device.address) it.copy(sendStatus = SendStatus.SENDING) else it
+                                        }
+                                    }
 
-                            val status = try {
-                                val btDevice = btAdapter?.getRemoteDevice(device.address)
-                                if (btDevice != null) {
-                                    sendFileToDevice(context, btDevice, uri)
-                                    SendStatus.SUCCESS
-                                } else {
-                                    SendStatus.FAILED
-                                }
-                            } catch (_: Exception) {
-                                SendStatus.FAILED
-                            }
+                                    val status = try {
+                                        val btDevice = btAdapter?.getRemoteDevice(device.address)
+                                        if (btDevice != null) {
+                                            val ok = sendFileToDevice(
+                                                context, 
+                                                btDevice, 
+                                                uri, 
+                                                selectedFileName, 
+                                                selectedFileSize
+                                            )
+                                            if (ok) SendStatus.SUCCESS else SendStatus.FAILED
+                                        } else {
+                                            SendStatus.FAILED
+                                        }
+                                    } catch (_: Exception) {
+                                        SendStatus.FAILED
+                                    }
 
-                            withContext(Dispatchers.Main) {
-                                discoveredDevices = discoveredDevices.map {
-                                    if (it.address == device.address) it.copy(sendStatus = status) else it
+                                    withContext(Dispatchers.Main) {
+                                        discoveredDevices = discoveredDevices.map {
+                                            if (it.address == device.address) it.copy(sendStatus = status) else it
+                                        }
+                                    }
+                                    
+                                    // Small delay between transfers to let the BT stack breathe
+                                    delay(500)
                                 }
                             }
-                        }
+                        }.awaitAll()
 
                         withContext(Dispatchers.Main) {
                             isSending = false
@@ -409,30 +427,85 @@ fun BluetoothFileSenderScreen(
 }
 
 @SuppressLint("MissingPermission")
-private fun sendFileToDevice(context: Context, device: BluetoothDevice, fileUri: Uri): Boolean {
+private fun sendFileToDevice(
+    context: Context,
+    device: BluetoothDevice,
+    fileUri: Uri,
+    fileName: String?,
+    fileSize: Long
+): Boolean {
     var socket: BluetoothSocket? = null
     var inputStream: InputStream? = null
+    var outputStream: java.io.OutputStream? = null
+
     return try {
-        socket = device.createRfcommSocketToServiceRecord(OPP_UUID)
+        // 1. Connection with Fallback (Primary -> Reflection Port 1)
+        socket = try {
+            device.createRfcommSocketToServiceRecord(OPP_UUID)
+        } catch (e: Exception) {
+            // Some devices/versions require direct port reflection
+            device.javaClass.getMethod("createRfcommSocket", Int::class.javaPrimitiveType)
+                .invoke(device, 1) as BluetoothSocket
+        }
+
         socket.connect()
+        outputStream = socket.outputStream
+        val socketIn = socket.inputStream
 
-        inputStream = context.contentResolver.openInputStream(fileUri)
-        val outputStream = socket.outputStream
+        // 2. OBEX CONNECT
+        // Packet: [Opcode 0x80][Len 0x0007][Ver 0x10][Flags 0x00][Max 0x2000]
+        val connectPacket = byteArrayOf(
+            0x80.toByte(), 0x00, 0x07, 0x10, 0x00, 0x20, 0x00
+        )
+        outputStream.write(connectPacket)
+        outputStream.flush()
+        
+        // Wait for CONNECT response (SUCCESS = 0xA0)
+        val response = ByteArray(128)
+        try { socketIn.read(response) } catch (_: Exception) {}
 
-        // OBEX-like raw file push: just stream the bytes over the RFCOMM channel
-        // Real OBEX has headers but many devices accept raw streams on OPP UUID
-        val buffer = ByteArray(8192)
+        // 3. OBEX PUT (Streamed Chunks)
+        inputStream = context.contentResolver.openInputStream(fileUri) ?: return false
+        val buffer = ByteArray(4032) // Keep packet size within standard MTUs
         var bytesRead: Int
-        while (inputStream?.read(buffer).also { bytesRead = it ?: -1 } != -1 && bytesRead > 0) {
+        var totalRead = 0L
+
+        while (inputStream.read(buffer).also { bytesRead = it } != -1) {
+            if (bytesRead <= 0) continue
+            totalRead += bytesRead
+            val isLast = totalRead >= fileSize
+
+            // Opcode: 0x02 (PUT) or 0x82 (PUT-FINAL)
+            // Body Header: 0x48 (BODY) or 0x49 (END-OF-BODY)
+            val opcode = if (isLast) 0x82.toByte() else 0x02.toByte()
+            val bodyHeader = if (isLast) 0x49.toByte() else 0x48.toByte()
+            
+            val packetLen = bytesRead + 6
+            val putHeader = byteArrayOf(
+                opcode,
+                (packetLen ushr 8).toByte(), (packetLen and 0xFF).toByte(),
+                bodyHeader,
+                ((bytesRead + 3) ushr 8).toByte(), ((bytesRead + 3) and 0xFF).toByte()
+            )
+
+            outputStream.write(putHeader)
             outputStream.write(buffer, 0, bytesRead)
             outputStream.flush()
+
+            // Wait for chunk acknowledgment (CONTINUE 0x90 or SUCCESS 0xA0)
+            try { socketIn.read(response) } catch (_: Exception) {}
         }
+
+        // 4. OBEX DISCONNECT
+        outputStream.write(byteArrayOf(0x81.toByte(), 0x00, 0x03))
+        outputStream.flush()
 
         true
     } catch (_: Exception) {
         false
     } finally {
         try { inputStream?.close() } catch (_: Exception) { }
+        try { outputStream?.close() } catch (_: Exception) { }
         try { socket?.close() } catch (_: Exception) { }
     }
 }
