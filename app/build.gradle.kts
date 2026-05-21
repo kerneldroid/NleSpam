@@ -11,8 +11,8 @@ android {
         applicationId = "com.nlespam"
         minSdk = 26
         targetSdk = 37
-        versionCode = 3
-        versionName = "2.0.5"
+        versionCode = 4
+        versionName = "2.0.6"
     }
 
     signingConfigs {

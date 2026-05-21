@@ -451,7 +451,7 @@ fun SettingsScreen(
             SettingsGroupHeader("About")
 
             SettingsGroupItem(
-                title = "About NleSpam v2.0.5",
+                title = "About NleSpam v2.0.6",
                 subtitle = "BLE & Bluetooth attack toolkit with Material 3 Expressive design. Supports 10+ attack vectors across Google, Apple, Samsung, Microsoft, and more.",
                 isFirst = true,
                 isLast = false,
@@ -463,7 +463,7 @@ fun SettingsScreen(
                             // Silent — no toast yet
                         }
                         remaining == 4 -> {
-                            Toast.makeText(context, "🤔 Interesting...", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, "Interesting...", Toast.LENGTH_SHORT).show()
                         }
                         remaining == 3 -> {
                             Toast.makeText(context, "Keep going... $remaining more", Toast.LENGTH_SHORT).show()
@@ -472,11 +472,11 @@ fun SettingsScreen(
                             Toast.makeText(context, "Almost there... $remaining more", Toast.LENGTH_SHORT).show()
                         }
                         remaining == 1 -> {
-                            Toast.makeText(context, "👀 One more tap...", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, "One more tap...", Toast.LENGTH_SHORT).show()
                         }
                         remaining <= 0 -> {
                             aboutClickCount = 0
-                            Toast.makeText(context, "🎉 You found the secret!", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, "You found the secret!", Toast.LENGTH_SHORT).show()
                             // Rickroll!
                             val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://www.youtube.com/watch?v=dQw4w9WgXcQ"))
                             context.startActivity(intent)
@@ -486,31 +486,26 @@ fun SettingsScreen(
             )
 
             SettingsGroupItem(
-                title = "What's New in v2.0.5",
+                title = "What's New in v2.0.6",
                 subtitle = buildString {
-                    appendLine("🔴 Attacks:")
+                    appendLine("Attacks:")
                     appendLine("• iBeacon Flood — fake location beacons")
                     appendLine("• Chromecast Spam — spoofed Google Cast")
                     appendLine("• AirTag Clone — fake Find My signals")
                     appendLine("• Mix Spam — combined Fast Pair + Swift Pair + Samsung")
                     appendLine()
-                    appendLine("🛠 Tools:")
-                    appendLine("• BLE Device Scanner")
-                    appendLine("• MAC Randomizer")
-                    appendLine("• Payload Inspector")
-                    appendLine("• RSSI Distance Calculator")
-                    appendLine("• Packet Logger")
-                    appendLine("• Bluetooth File Blast")
-                    appendLine("• UUID Database — searchable BLE UUIDs")
-                    appendLine("• Signal Monitor — live RSSI graphs")
-                    appendLine("• Advertisement Decoder — raw ad parser")
+                    appendLine("Tools:")
+                    appendLine("• Discovery Suite — BLE Scanner, Signal Monitor, RSSI Distance")
+                    appendLine("• Analysis Suite — Payload Inspector, Ad Decoder, UUID DB")
+                    appendLine("• Packet Logger — live traffic monitor")
+                    appendLine("• Bluetooth File Blast — file spammer")
                     appendLine()
-                    appendLine("⚙ Settings:")
+                    appendLine("Settings:")
                     appendLine("• Scan Duration, Shuffle Interval, Loop Mode")
                     appendLine("• Notification Sound, Stealth Mode, Batch Size")
-                    appendLine("• OLED theme, MAC randomization, Auto-stop")
+                    appendLine("• OLED theme, Auto-stop")
                     appendLine()
-                    append("🥚 Hidden easter egg 👀")
+                    append("Hidden easter egg")
                 },
                 isFirst = false,
                 isLast = true,
