@@ -246,7 +246,7 @@ fun SpamControlBar(
             if (isRunning) {
                 val packetsSent by packetsFlow.collectAsState()
                 Text(
-                    text = "📡 $packetsSent pkts",
+                    text = "$packetsSent pkts",
                     style = MaterialTheme.typography.labelLarge,
                     color = MaterialTheme.colorScheme.primary,
                 )

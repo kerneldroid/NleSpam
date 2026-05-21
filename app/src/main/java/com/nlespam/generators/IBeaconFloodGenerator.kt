@@ -46,7 +46,7 @@ class IBeaconFloodGenerator : SpamGenerator {
                 )
 
         AdvertisementSet(
-            title = "📍 $label",
+            title = label,
             target = AdvertisementTarget.BEACON,
             type = SpamType.IBEACON_FLOOD,
             manufacturerData = ManufacturerData(ManufacturerIds.APPLE, payload),

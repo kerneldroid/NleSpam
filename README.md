@@ -15,6 +15,13 @@
 - Android 8.0+ (API 26+)
 - BLE hardware support
 
+## Screenshots
+<img src="images/screen1.png" width="300">
+
+## Maintenance
+**This is my personal side-project.** I will rarely provide bug fixes or active maintenance myself, as I am focused on other projects. 
+However, **Pull Requests (PRs) are highly encouraged and will be reviewed.** You may also open Issues, but please use the provided templates and understand that community PRs are the primary way this project will move forward.
+
 ## Building from source
 ```bash
 ./gradlew clean assembleRelease

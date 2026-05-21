@@ -87,7 +87,7 @@ class SpamForegroundService : Service() {
         val builder = NotificationCompat.Builder(this, NleSpamApp.CHANNEL_ID)
             .setSmallIcon(android.R.drawable.stat_sys_data_bluetooth)
             .setContentTitle("NleSpam Active")
-            .setContentText("📡 $packetsSent packets sent")
+            .setContentText("$packetsSent packets sent")
             .setContentIntent(openPending)
             .addAction(android.R.drawable.ic_media_pause, "Stop", stopPending)
             .setOngoing(true)

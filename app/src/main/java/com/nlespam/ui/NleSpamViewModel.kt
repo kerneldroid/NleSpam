@@ -353,6 +353,10 @@ class NleSpamViewModel(application: Application) : AndroidViewModel(application)
         ctx.stopService(Intent(ctx, SpamForegroundService::class.java))
     }
 
+    // --- Spam Radar / Scanners ---
+    fun startRadar() = engine.startScan()
+    fun stopRadar() = engine.stopScan()
+
     private fun getFlowForType(type: SpamType): MutableStateFlow<List<AdvertisementSet>> {
         return when (type) {
             SpamType.FAST_PAIR -> _fastPairSets

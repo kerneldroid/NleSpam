@@ -34,7 +34,7 @@ class AirTagCloneGenerator : SpamGenerator {
         val payload = byteArrayOf(continuityType, payloadLength, statusByte) + publicKey
 
         AdvertisementSet(
-            title = "🏷️ $deviceName",
+            title = deviceName,
             target = AdvertisementTarget.IOS,
             type = SpamType.AIRTAG_CLONE,
             manufacturerData = ManufacturerData(ManufacturerIds.APPLE, payload),

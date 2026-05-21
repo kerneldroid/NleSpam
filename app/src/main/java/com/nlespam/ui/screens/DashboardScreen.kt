@@ -252,7 +252,7 @@ fun DashboardScreen(
 fun DashboardStatusText(isRunningFlow: StateFlow<Boolean>) {
     val isRunning by isRunningFlow.collectAsState()
     Text(
-        text = if (isRunning) "📡 Spamming Active" else "Ready to spam",
+        text = if (isRunning) "Spamming Active" else "Ready to spam",
         style = MaterialTheme.typography.bodySmall,
         color = if (isRunning) MaterialTheme.colorScheme.primary
         else MaterialTheme.colorScheme.onSurfaceVariant,

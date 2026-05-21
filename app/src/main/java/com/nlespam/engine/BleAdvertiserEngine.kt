@@ -116,6 +116,15 @@ class BleAdvertiserEngine(private val context: Context) {
     private var spamJob: Job? = null
     private val scope = CoroutineScope(Dispatchers.Default + SupervisorJob())
 
+    private val _isScanning = MutableStateFlow(false)
+    val isScanning = _isScanning.asStateFlow()
+
+    private val _scanResults = MutableStateFlow<List<SpamRadarEntry>>(emptyList())
+    val scanResults = _scanResults.asStateFlow()
+
+    private var scanCallback: ScanCallback? = null
+    private val scanResultsMap = mutableMapOf<String, SpamRadarEntry>()
+
     var intervalMs: Long = 100L
     var txPower: Int = AdvertiseSettings.ADVERTISE_TX_POWER_HIGH
 
@@ -220,8 +229,66 @@ class BleAdvertiserEngine(private val context: Context) {
         _activeAdvertisers.value = 0
     }
 
+    fun startScan() {
+        if (_isScanning.value) return
+        val sc = scanner ?: return
+
+        _isScanning.value = true
+        _scanResults.value = emptyList()
+        synchronized(scanResultsMap) { scanResultsMap.clear() }
+
+        val settings = ScanSettings.Builder()
+            .setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY)
+            .setReportDelay(0)
+            .build()
+
+        scanCallback = object : ScanCallback() {
+            override fun onScanResult(callbackType: Int, result: ScanResult) {
+                val address = result.device?.address ?: return
+                val entry = SpamRadarEntry(
+                    deviceAddress = address,
+                    rssi = result.rssi,
+                    detectedType = SpamClassifier.classify(result),
+                    manufacturerId = SpamClassifier.getManufacturerId(result),
+                    rawPayloadHex = SpamClassifier.getRawPayloadHex(result),
+                    timestamp = System.currentTimeMillis()
+                )
+
+                synchronized(scanResultsMap) {
+                    scanResultsMap[address] = entry
+                    _scanResults.value = scanResultsMap.values
+                        .sortedByDescending { it.timestamp }
+                        .take(100)
+                }
+            }
+
+            override fun onScanFailed(errorCode: Int) {
+                Log.e(tag, "Scan failed: $errorCode")
+                _isScanning.value = false
+            }
+        }
+
+        try {
+            sc.startScan(null, settings, scanCallback)
+        } catch (e: SecurityException) {
+            Log.e(tag, "Scan permission denied: ${e.message}")
+            _isScanning.value = false
+        }
+    }
+
+    fun stopScan() {
+        _isScanning.value = false
+        scanCallback?.let { cb ->
+            try {
+                scanner?.stopScan(cb)
+            } catch (_: SecurityException) { }
+        }
+        scanCallback = null
+    }
+
     fun destroy() {
         stop()
+        stopScan()
         scope.cancel()
     }
 }

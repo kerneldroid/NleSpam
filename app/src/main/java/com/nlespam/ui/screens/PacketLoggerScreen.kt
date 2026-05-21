@@ -157,7 +157,7 @@ fun PacketLoggerScreen(
                     }
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Text(
-                            text = if (isRunning) "🟢 LIVE" else "⏸ Idle",
+                            text = if (isRunning) "LIVE" else "Idle",
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
                             color = if (isRunning) MaterialTheme.colorScheme.primary

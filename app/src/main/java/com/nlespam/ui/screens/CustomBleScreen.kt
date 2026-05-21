@@ -282,7 +282,7 @@ fun CustomBleStats(packetsSentProvider: () -> Long) {
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Text("📡 Broadcasting", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onPrimaryContainer)
+            Text("Broadcasting", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onPrimaryContainer)
             Text("${packetsSentProvider()} pkts", color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
         }
     }

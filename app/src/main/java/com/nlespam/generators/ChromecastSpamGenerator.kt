@@ -34,7 +34,7 @@ class ChromecastSpamGenerator : SpamGenerator {
         ) + nameBytes + Random.nextBytes(4) // + random device ID suffix
 
         AdvertisementSet(
-            title = "📺 $deviceName",
+            title = deviceName,
             target = AdvertisementTarget.GOOGLE,
             type = SpamType.CHROMECAST_SPAM,
             serviceData = ServiceData(castServiceUuid, payload),
